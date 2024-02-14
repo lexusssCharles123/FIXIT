@@ -12,9 +12,19 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   http: ^0.13.3
-  firebase_auth: ^4.5.0
-  firebase_core: ^2.0.0
+  firebase_auth: ^4.16.0
+  firebase_core: ^2.24.2
   url_launcher: ^6.0.9
+  font_awesome_flutter: ^10.6.0
+  cloud_firestore: ^4.14.0
+  firebase_storage: ^11.2.4
+  fluttertoast: ^8.2.2
+  google_sign_in: ^6.1.5
+  shared_preferences: ^2.0.8
+
+
+
+
 
 flutter:
   assets:
@@ -26,6 +36,16 @@ flutter:
     - assets/8.jpeg
     - assets/12.png
     - assets/15.png
+    - assets/mm.jpg
+    - assets/nn.jpg
+    - assets/appliance.jpg
+    - assets/carrepair1.jpg
+    - assets/ma.jpg
+    - assets/den.jpg
+    - assets/hh.jpg
+    - assets/dd.jpg
+    - assets/kk.jpg
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
