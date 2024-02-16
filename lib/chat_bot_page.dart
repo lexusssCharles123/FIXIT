@@ -9,47 +9,64 @@ class ChatBotPage extends StatefulWidget {
 class _ChatBotPageState extends State<ChatBotPage> {
   TextEditingController _textController = TextEditingController();
   List<Map<String, String>> _chatMessages = [];
-  List<String> _questionOptions = [
-    'How do I request a service?',
-    'What services do you offer?',
-    'How can I contact support?',
-  ];
 
   static const String user = "User";
   static const String bot = "Bot";
+
+  @override
+  void initState() {
+    super.initState();
+    _chatMessages.add({
+      "sender": bot,
+      "message": "Hi there! I'm here to assist you. Feel free to ask me anything!",
+    });
+  }
 
   void _handleMessageSend(String message) {
     if (message.isNotEmpty) {
       setState(() {
         _chatMessages.add({"sender": user, "message": message});
 
-        if (message.toLowerCase() == 'how do i request a service?') {
-          _chatMessages.add({
-            "sender": bot,
-            "message":
-            "To request a service, follow these steps:\n1. Go to the home page.\n2. Click on the service you want.\n3. Fill up the form.\n4. Submit your request."
-          });
-        } else if (message.toLowerCase() == 'what services do you offer?') {
-          _chatMessages.add({
-            "sender": bot,
-            "message":
-            "We offer a variety of services including house repair, personal services, and more. You can explore them on our home page."
-          });
-        } else if (message.toLowerCase() == 'how can i contact support?') {
-          _chatMessages.add({
-            "sender": bot,
-            "message":
-            "If you need support, you can reach us through our social media channels or via email. Visit our home page and click on the support option to find our contact details."
-          });
-        } else if (_questionOptions.contains(message)) {
-          _chatMessages.add({"sender": bot, "message": "You asked: $message"});
-        } else {
-          _chatMessages.add({"sender": bot, "message": "Hi there! How can I assist you?"});
-        }
+        // Respond to specific questions
+        _respondToQuestion(message);
 
         _textController.clear(); // Clear the input field
       });
     }
+  }
+
+  void _respondToQuestion(String question) {
+    String response = "";
+
+    // Check for specific questions and provide appropriate responses
+    switch (question.toLowerCase()) {
+      case 'how do i request a service?':
+        response =
+        "To request a service, follow these steps:\n1. Go to the home page.\n2. Click on the service you want.\n3. Fill up the form.\n4. Submit your request.";
+        break;
+      case 'what services do you offer?':
+        response =
+        "We offer a variety of services including house repair, personal services, and more. You can explore them on our home page.";
+        break;
+      case 'how can i contact support?':
+        response =
+        "If you need support, you can reach us through our social media channels or via email. Visit our home page and click on the support option to find our contact details.";
+        break;
+      case 'how do i make a payment?':
+        response =
+        "You can make payments securely through our app. Simply go to the payment section and follow the instructions to complete your transaction.";
+        break;
+      case 'is there a warranty for your services?':
+        response =
+        "Yes, we provide warranty for our services. The duration and coverage vary depending on the type of service. Please refer to our terms and conditions for more details.";
+        break;
+      default:
+        response =
+        "I'm sorry, I don't understand that question. You can ask me about our services, how to request a service, how to make a payment, or how to contact support.";
+    }
+
+    // Add bot's response to the chat
+    _chatMessages.add({"sender": bot, "message": response});
   }
 
   @override
@@ -77,9 +94,10 @@ class _ChatBotPageState extends State<ChatBotPage> {
         children: [
           Expanded(
             child: ListView.builder(
+              reverse: true, // Scroll to bottom initially
               itemCount: _chatMessages.length,
               itemBuilder: (BuildContext context, int index) {
-                Map<String, String> message = _chatMessages[index];
+                Map<String, String> message = _chatMessages.reversed.toList()[index]; // Reverse the list
                 return Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                   child: MessageWidget(message: message),
@@ -87,6 +105,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
               },
             ),
           ),
+          // Your message input field and buttons
+
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
@@ -94,14 +114,28 @@ class _ChatBotPageState extends State<ChatBotPage> {
               children: [
                 Wrap(
                   spacing: 8.0,
-                  children: _questionOptions
-                      .map(
-                        (option) => ElevatedButton(
-                      onPressed: () => _handleMessageSend(option),
-                      child: Text(option),
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => _handleMessageSend('How do I request a service?'),
+                      child: Text('How to request a service?'),
                     ),
-                  )
-                      .toList(),
+                    ElevatedButton(
+                      onPressed: () => _handleMessageSend('What services do you offer?'),
+                      child: Text('What services do you offer?'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => _handleMessageSend('How can I contact support?'),
+                      child: Text('How to contact support?'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => _handleMessageSend('How do I make a payment?'),
+                      child: Text('How to make a payment?'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => _handleMessageSend('Is there a warranty for your services?'),
+                      child: Text('Warranty for services?'),
+                    ),
+                  ],
                 ),
                 Row(
                   children: [

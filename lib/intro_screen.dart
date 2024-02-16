@@ -1,9 +1,7 @@
-import 'package:fixit/login_page.dart';
 import 'package:flutter/material.dart';
+import 'package:fixit/login_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-
-// ... (imports remain unchanged)
+import 'package:shared_preferences/shared_preferences.dart';
 
 class IntroScreen extends StatefulWidget {
   @override
@@ -24,6 +22,27 @@ class _IntroScreenState extends State<IntroScreen> {
         currentPage = _pageController.page?.round() ?? 0;
       });
     });
+    checkIntroScreen();
+  }
+
+  void checkIntroScreen() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool introShown = prefs.getBool('introShown') ?? false;
+    if (introShown) {
+      navigateToLoginPage();
+    }
+  }
+
+  void _markIntroScreenSeen() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('introShown', true);
+  }
+
+  void navigateToLoginPage() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
   }
 
   @override
@@ -106,10 +125,8 @@ class _IntroScreenState extends State<IntroScreen> {
   Widget buildLastSlide(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
+        _markIntroScreenSeen(); // Mark intro screen as seen
+        navigateToLoginPage();
       },
       child: Container(
         color: Colors.white,
@@ -123,11 +140,8 @@ class _IntroScreenState extends State<IntroScreen> {
                 height: 60, // Set the desired height
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const LoginPage()),
-                    );
+                    _markIntroScreenSeen(); // Mark intro screen as seen
+                    navigateToLoginPage();
                   },
                   icon: Icon(FontAwesomeIcons.play),
                   label: Text('Get Started'),
@@ -139,7 +153,6 @@ class _IntroScreenState extends State<IntroScreen> {
       ),
     );
   }
-
 
   Widget buildDotIndicator(int index) {
     return Container(
@@ -153,4 +166,3 @@ class _IntroScreenState extends State<IntroScreen> {
     );
   }
 }
-

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ContractForm extends StatefulWidget {
   final String contractTitle;
@@ -47,13 +48,16 @@ class _ContractFormState extends State<ContractForm> {
         ),
         const SizedBox(height: 20),
         ElevatedButton(
-          onPressed: _isLoading ? null : () {
+          onPressed: _isLoading ? null : () async {
+            // Get the current user's email
+            String senderEmail = FirebaseAuth.instance.currentUser!.email!;
             _submitForm(
               context,
               nameController.text,
               contractController.text,
               remarksController.text,
               widget.contractTitle,
+              senderEmail, // Pass sender's email to _submitForm
             );
           },
           child: _isLoading ? CircularProgressIndicator() : Text('Submit'),
@@ -62,11 +66,14 @@ class _ContractFormState extends State<ContractForm> {
     );
   }
 
-  void _submitForm(BuildContext context,
+  void _submitForm(
+      BuildContext context,
       String name,
       String contract,
       String remarks,
-      String title,) async {
+      String title,
+      String senderEmail,
+      ) async {
     if (name.isEmpty || contract.isEmpty || remarks.isEmpty) {
       // Show an error toast if any field is empty
       Fluttertoast.showToast(
@@ -87,7 +94,6 @@ class _ContractFormState extends State<ContractForm> {
 
     // Define your submission limit duration (e.g., 1 minute)
     const int submissionLimitDuration = 120000; // 24 hours in milliseconds
-
 
     if (currentTime - lastSubmitTimestamp < submissionLimitDuration) {
       Fluttertoast.showToast(
@@ -110,7 +116,8 @@ class _ContractFormState extends State<ContractForm> {
       final CollectionReference contracts =
       FirebaseFirestore.instance.collection('contracts');
 
-      await contracts.add({
+      // Use sender's email as document ID
+      await contracts.doc(senderEmail).set({
         'name': name,
         'contract': contract,
         'remarks': remarks,
@@ -151,4 +158,5 @@ class _ContractFormState extends State<ContractForm> {
       });
     }
   }
+
 }

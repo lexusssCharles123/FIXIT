@@ -3,11 +3,126 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'my_image_row.dart';
-import 'login_page.dart'; // Import your login page here
 import 'chat_bot_page.dart'; // Import your chat bot page here
+import 'menu.dart'; // Import your menu here
+import 'package:shared_preferences/shared_preferences.dart';
 
-class MyScaffold extends StatelessWidget {
+class MyScaffold extends StatefulWidget {
   const MyScaffold({Key? key}) : super(key: key);
+
+  @override
+  _MyScaffoldState createState() => _MyScaffoldState();
+}
+
+class _MyScaffoldState extends State<MyScaffold> {
+  bool agreed = false; // Initialize the agreed variable
+
+  @override
+  void initState() {
+    super.initState();
+    // Show terms and conditions when the app is opened
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      showTermsAndConditions();
+    });
+  }
+
+  Future<void> showTermsAndConditions() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool agreed = prefs.getBool('agreed_terms') ?? false;
+
+    if (!agreed) {
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: Text("Terms and Conditions"),
+                content: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Please read these terms and conditions carefully before using our app. By using the app, you agree to be bound by these terms and conditions. If you do not agree to abide by these terms and conditions, please do not use the app.",
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "1. Use of the App: You must be at least 18 years old to use this app. By using this app, you represent that you are at least 18 years old and have the legal capacity to enter into this agreement.",
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "2. Account Registration: You may be required to create an account to access certain features of the app. You agree to provide accurate and complete information during the registration process.",
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "3. User Content: You are solely responsible for any content you post or upload to the app. By posting content, you grant us a worldwide, non-exclusive, royalty-free license to use, reproduce, modify, adapt, publish, translate, distribute, and display such content.",
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "4. Prohibited Conduct: You agree not to engage in any conduct that violates these terms and conditions or infringes upon the rights of others. Prohibited conduct includes, but is not limited to, the following:",
+                      ),
+                      SizedBox(height: 5),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("- Using the app for any unlawful purpose."),
+                            Text("- Impersonating any person or entity."),
+                            Text("- Posting or transmitting any content that is defamatory, obscene, or otherwise objectionable."),
+                            Text("- Interfering with the operation of the app."),
+                            Text("- Uploading viruses or other malicious code."),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "5. Modification of Terms: We reserve the right to modify these terms and conditions at any time without prior notice. Your continued use of the app after any such changes constitutes your acceptance of the new terms and conditions.",
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        "If you have any questions about these terms and conditions, please contact us.",
+                      ),
+                      SizedBox(height: 10),
+                      CheckboxListTile(
+                        title: Text("I Agree"),
+                        value: agreed,
+                        onChanged: (value) {
+                          setState(() {
+                            agreed = value!;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('Close'),
+                  ),
+                  TextButton(
+                    onPressed: agreed
+                        ? () async {
+                      setState(() {
+                        agreed = true;
+                      });
+                      await prefs.setBool('agreed_terms', true);
+                      Navigator.of(context).pop();
+                    }
+                        : null, // Disable the button if agreed is false
+                    child: Text('Agree'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    }
+  }
 
   Future<bool> _onWillPop(BuildContext context) async {
     // Show dialog only when using back arrow button
@@ -38,7 +153,7 @@ class MyScaffold extends StatelessWidget {
     return WillPopScope(
       onWillPop: () async {
         // Handle system back button press
-        await showDialog(
+        final shouldExit = await showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: Text('Are you sure?'),
@@ -55,8 +170,8 @@ class MyScaffold extends StatelessWidget {
             ],
           ),
         );
-        // Return false to prevent back navigation if the dialog was shown
-        return false;
+        // Return true to exit the app if the dialog was shown and "Yes" was pressed
+        return shouldExit ?? false;
       },
       child: Scaffold(
         appBar: AppBar(
@@ -76,7 +191,7 @@ class MyScaffold extends StatelessWidget {
               // Handle back arrow button press
               final shouldExit = await _onWillPop(context);
               if (shouldExit) {
-                Navigator.of(context).pop();
+                SystemNavigator.pop(); // Exit the app
               }
             },
           ),
@@ -87,76 +202,13 @@ class MyScaffold extends StatelessWidget {
                 size: 24,
               ),
               onPressed: () {
-                // Show a menu for the user
+                // Show the menu
                 FirebaseAuth auth = FirebaseAuth.instance;
                 User? user = auth.currentUser;
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text("Menu"),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                            title: Text(
-                              user != null ? "User Email: ${user.email}" : "User not logged in",
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Divider(color: Colors.grey),
-                          ListTile(
-                            leading: Icon(
-                              FontAwesomeIcons.facebook,
-                              color: Colors.blue,
-                              size: 20,
-                            ),
-                            title: Text("Follow us on Facebook"),
-                            onTap: () {
-                              // Action to follow on Facebook
-                            },
-                          ),
-                          ListTile(
-                            leading: Icon(
-                              FontAwesomeIcons.tiktok,
-                              color: Colors.black,
-                              size: 20,
-                            ),
-                            title: Text("Follow us on TikTok"),
-                            onTap: () {
-                              // Action to follow on TikTok
-                            },
-                          ),
-                          Divider(color: Colors.grey),
-                          ListTile(
-                            title: Text("Forgot Password"),
-                            onTap: () {
-                              // Action to navigate to forgot password screen
-                            },
-                          ),
-                          ListTile(
-                            title: Text(
-                              "Logout",
-                              style: TextStyle(color: Colors.red),
-                            ),
-                            onTap: () async {
-                              await FirebaseAuth.instance.signOut();
-                              Navigator.of(context).pop();
-                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage())); // Navigate to login page
-                            },
-                          ),
-                          ListTile(
-                            title: Text(
-                              "Close",
-                              style: TextStyle(color: Theme.of(context).primaryColor),
-                            ),
-                            onTap: () {
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                        ],
-                      ),
-                    );
+                    return MyMenu(user: user);
                   },
                 );
               },
@@ -174,55 +226,111 @@ class MyScaffold extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              Text(
-                'House Repair/Services',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
-                textAlign: TextAlign.center,
+              Card(
+                elevation: 3,
+                color: Colors.grey[100], // Dark background color
+                child: InkWell(
+                  onTap: () {
+                    // Handle card tap for House Repair/Services
+                    print('House Repair/Services tapped');
+                  },
+                  child: Column(
+                    children: [
+                      ListTile(
+                        title: Text(
+                          'House Repair/Services',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87), // White text color
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Card(
+                        elevation: 3,
+                        color: Colors.grey[300], // Dark background color
+                        child: MyImageRow(
+                          firstImage: ['assets/3.jpg', 'Plumbing Service'],
+                          secondImage: ['assets/5.jpg', 'Painting Services'],
+                          thirdImage: ['assets/carrepair1.jpg', 'Car Repair'],
+                          textFontSize: 10,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Card(
+                        elevation: 3,
+                        color: Colors.grey[300], // Dark background color
+                        child: MyImageRow(
+                          firstImage: ['assets/c.jpg', 'Electrical Work'],
+                          secondImage: ['assets/appliance.jpg', 'Appliance Fix'],
+                          thirdImage: ['assets/4.jpg', 'Gadget Repair'],
+                          textFontSize: 10,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Card(
+                        elevation: 3,
+                        color: Colors.grey[300], // Dark background color
+                        child: MyImageRow(
+                          firstImage: ['assets/7.jpeg', 'Furniture Repair'],
+                          secondImage: ['assets/nn.jpg', 'Welding Services'],
+                          thirdImage: ['assets/kk.jpg', 'Kasambahay'],
+                          textFontSize: 10,
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 20),
-              MyImageRow(
-                firstImage: ['assets/3.jpg', 'Plumbing Service'],
-                secondImage: ['assets/5.jpg', 'Painting Services'],
-                thirdImage: ['assets/carrepair1.jpg', 'Car Repair'],
-                textFontSize: 10,
-              ),
-              const SizedBox(height: 20),
-              MyImageRow(
-                firstImage: ['assets/c.jpg', 'Electrical Work'],
-                secondImage: ['assets/appliance.jpg', 'Appliance Fix'],
-                thirdImage: ['assets/4.jpg', 'Gadget Repair'],
-                textFontSize: 10,
-              ),
-              const SizedBox(height: 20),
-              MyImageRow(
-                firstImage: ['assets/7.jpeg', 'Furniture Repair'],
-                secondImage: ['assets/nn.jpg', 'Welding Services'],
-                thirdImage: ['assets/kk.jpg', 'Kasambahay'],
-                textFontSize: 10,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Personal Services',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              MyImageRow(
-                firstImage: ['assets/hh.jpg', 'Haircut Services'],
-                secondImage: ['assets/mm.jpg', 'Massage Therapy'],
-                thirdImage: ['assets/8.jpeg', 'Home Cleaning'],
-                textFontSize: 10,
-              ),
-              const SizedBox(height: 20),
-              MyImageRow(
-                firstImage: ['assets/den.jpg', 'Dental Services'],
-                secondImage: ['assets/dd.jpg', 'Driving Services'],
-                thirdImage: ['assets/ma.jpg', 'Makeup Artist'],
-                textFontSize: 10,
+              Card(
+                elevation: 3,
+                color: Colors.grey[100], // Dark background color
+                child: InkWell(
+                  onTap: () {
+                    // Handle card tap for Personal Services
+                    print('Personal Services tapped');
+                  },
+                  child: Column(
+                    children: [
+                      ListTile(
+                        title: Text(
+                          'Personal Services',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87), // White text color
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Card(
+                        elevation: 3,
+                        color: Colors.grey[300], // Dark background color
+                        child: MyImageRow(
+                          firstImage: ['assets/hh.jpg', 'Haircut Services'],
+                          secondImage: ['assets/mm.jpg', 'Massage Therapy'],
+                          thirdImage: ['assets/8.jpeg', 'Home Cleaning'],
+                          textFontSize: 10,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Card(
+                        elevation: 3,
+                        color: Colors.grey[300], // Dark background color
+                        child: MyImageRow(
+                          firstImage: ['assets/den.jpg', 'Dental Services'],
+                          secondImage: ['assets/dd.jpg', 'Driving Services'],
+                          thirdImage: ['assets/ma.jpg', 'Makeup Artist'],
+                          textFontSize: 10,
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
         ),
+
+
         bottomNavigationBar: Container(
           height: 40, // set your custom height here
           color: Colors.white, // set the color of the BottomAppBar
